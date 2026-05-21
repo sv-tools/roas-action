@@ -56,19 +56,20 @@ Layer overlay specs on top of a base via `merge`:
 
 ## Inputs
 
-| Name            | Required | Default    | Applies to        | Description                                                                                |
-|-----------------|----------|------------|-------------------|--------------------------------------------------------------------------------------------|
-| `subcommand`    | no       | `validate` | both              | `validate` or `convert`.                                                                   |
-| `file`          | yes      | —          | both              | Path to the OpenAPI spec (JSON or YAML), relative to the repo root.                        |
-| `from`          | no       | —          | both              | Force the input spec version. One of `v2`, `v3_0`, `v3_1`, `v3_2`.                         |
-| `to`            | yes\*    | —          | convert           | Target version for `convert`. Required when `subcommand: convert`.                         |
-| `merge`         | no       | —          | convert           | Newline-separated list of overlay specs to merge on top of the base after version conversion. |
-| `format`        | no       | auto       | both              | Force input format: `json` or `yaml`. By default inferred from the file extension.         |
-| `load`          | no       | —          | validate          | Whitespace-separated list of `$ref` loaders to enable: `file`, `http`.                     |
-| `ignore`        | no       | —          | validate          | Whitespace-separated validation checks to skip (see [check list](#validation-checks)).     |
-| `print`         | no       | `false`    | validate          | If `true`, echo the parsed spec on stdout (diagnostics stay on stderr).                    |
-| `output-format` | no       | match in   | convert           | Force output format: `json` or `yaml`.                                                     |
-| `output-file`   | no       | stdout     | convert           | Write the converted spec to this path. If unset, output streams to the action log.         |
+| Name            | Required | Default    | Applies to | Description                                                                                   |
+|-----------------|----------|------------|------------|-----------------------------------------------------------------------------------------------|
+| `subcommand`    | no       | `validate` | both       | `validate` or `convert`.                                                                      |
+| `file`          | yes      | —          | both       | Path to the OpenAPI spec (JSON or YAML), relative to the repo root.                           |
+| `from`          | no       | —          | both       | Force the input spec version. One of `v2`, `v3_0`, `v3_1`, `v3_2`.                            |
+| `to`            | yes\*    | —          | convert    | Target version for `convert`. Required when `subcommand: convert`.                            |
+| `merge`         | no       | —          | convert    | Newline-separated list of overlay specs to merge on top of the base after version conversion. |
+| `merge-options` | no       | —          | convert    | Whitespace-separated merge options (requires `merge`). See [merge options](#merge-options).   |
+| `format`        | no       | auto       | both       | Force input format: `json` or `yaml`. By default inferred from the file extension.            |
+| `load`          | no       | —          | validate   | Whitespace-separated list of `$ref` loaders to enable: `file`, `http`.                        |
+| `ignore`        | no       | —          | validate   | Whitespace-separated validation checks to skip (see [check list](#validation-checks)).        |
+| `print`         | no       | `false`    | validate   | If `true`, echo the parsed spec on stdout (diagnostics stay on stderr).                       |
+| `output-format` | no       | match in   | convert    | Force output format: `json` or `yaml`.                                                        |
+| `output-file`   | no       | stdout     | convert    | Write the converted spec to this path. If unset, output streams to the action log.            |
 
 ### Validation checks
 
@@ -85,6 +86,18 @@ empty-external-documentation-url
 ```
 
 Run `roas validate --help` for the description of each check.
+
+### Merge options
+
+Values accepted by `merge-options` (passed straight through as
+`roas convert --merge-option`; defaults are "incoming wins" on scalar conflicts,
+base retains `info`/`openapi`, refs replace silently, schemas are leaves):
+
+- `base-wins` — reverse the default "incoming wins" policy.
+- `error-on-conflict` — abort on the first real collision with a non-zero exit.
+- `deep-merge-object-schemas` — deep-merge object schemas instead of leaf-replace.
+- `merge-info` — allow `info`/`openapi`/`swagger` to merge instead of being preserved from base.
+- `replace-lists-when-empty` — allow an empty incoming list (`servers`, `security`, …) to clear a populated base list.
 
 ## How it works
 

@@ -16,6 +16,8 @@ inputs:
     description: 'Target version for convert (e.g. v3_1, v3_2). Required when subcommand=convert.'
   merge:
     description: 'Newline-separated list of additional specs to merge on top of the base (convert only). Each source is upconverted to the target version, then merged in incoming-order.'
+  merge-options:
+    description: 'Whitespace-separated merge options (convert only, requires merge): base-wins, error-on-conflict, deep-merge-object-schemas, merge-info, replace-lists-when-empty.'
   load:
     description: 'Whitespace-separated $ref loaders to enable: file, http'
   ignore:
@@ -35,3 +37,4 @@ runs:
   env:
     INPUT_OUTPUT_FILE: ${{ inputs.output-file }}
     INPUT_OUTPUT_FORMAT: ${{ inputs.output-format }}
+    INPUT_MERGE_OPTIONS: ${{ inputs.merge-options }}

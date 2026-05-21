@@ -85,6 +85,7 @@ jobs:
           file: tests/fixtures/valid-v3_0.yaml
           to: v3_2
           merge: tests/fixtures/overlay-v3_0.yaml
+          merge-options: deep-merge-object-schemas
           output-file: merged.yaml
 
       - name: assert merged output contains base + overlay paths

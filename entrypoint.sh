@@ -27,6 +27,7 @@ if [[ "$sub" == "convert" ]]; then
   while IFS= read -r v; do
     [[ -n "$v" ]] && args+=(--merge "$v")
   done <<< "${INPUT_MERGE:-}"
+  for v in ${INPUT_MERGE_OPTIONS:-}; do args+=(--merge-option "$v"); done
 fi
 
 if [[ "$sub" == "validate" ]]; then
