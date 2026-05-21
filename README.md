@@ -40,6 +40,20 @@ Upconvert a spec to OpenAPI 3.2 and write the result next to the source:
     output-file: openapi.v3_2.yaml
 ```
 
+Layer overlay specs on top of a base via `merge`:
+
+```yaml
+- uses: sv-tools/roas-action@v1
+  with:
+    subcommand: convert
+    file: openapi.yaml
+    to: v3_2
+    merge: |
+      overlays/prod.yaml
+      overlays/eu.yaml
+    output-file: openapi.merged.yaml
+```
+
 ## Inputs
 
 | Name            | Required | Default    | Applies to        | Description                                                                                |
@@ -48,6 +62,7 @@ Upconvert a spec to OpenAPI 3.2 and write the result next to the source:
 | `file`          | yes      | —          | both              | Path to the OpenAPI spec (JSON or YAML), relative to the repo root.                        |
 | `from`          | no       | —          | both              | Force the input spec version. One of `v2`, `v3_0`, `v3_1`, `v3_2`.                         |
 | `to`            | yes\*    | —          | convert           | Target version for `convert`. Required when `subcommand: convert`.                         |
+| `merge`         | no       | —          | convert           | Newline-separated list of overlay specs to merge on top of the base after version conversion. |
 | `format`        | no       | auto       | both              | Force input format: `json` or `yaml`. By default inferred from the file extension.         |
 | `load`          | no       | —          | validate          | Whitespace-separated list of `$ref` loaders to enable: `file`, `http`.                     |
 | `ignore`        | no       | —          | validate          | Whitespace-separated validation checks to skip (see [check list](#validation-checks)).     |

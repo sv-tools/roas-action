@@ -78,6 +78,22 @@ jobs:
             exit 1
           }
 
+      - name: convert with merge overlay
+        uses: ./
+        with:
+          subcommand: convert
+          file: tests/fixtures/valid-v3_0.yaml
+          to: v3_2
+          merge: tests/fixtures/overlay-v3_0.yaml
+          output-file: merged.yaml
+
+      - name: assert merged output contains base + overlay paths
+        run: |
+          test -s merged.yaml || { echo "merged.yaml is empty or missing"; exit 1; }
+          grep -q '/ping:' merged.yaml || { echo "merged.yaml missing /ping path from base"; cat merged.yaml; exit 1; }
+          grep -q '/pong:' merged.yaml || { echo "merged.yaml missing /pong path from overlay"; cat merged.yaml; exit 1; }
+          echo "OK: merge combined base and overlay paths"
+
       - name: convert without 'to' must fail
         id: convert-noto
         continue-on-error: true

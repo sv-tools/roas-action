@@ -1,0 +1,14 @@
+openapi: 3.0.3
+info:
+  title: Sample API
+  version: 1.0.0
+tags:
+  - name: pong
+paths:
+  /pong:
+    get:
+      tags: [pong]
+      operationId: pong
+      responses:
+        '200':
+          description: ping

@@ -24,6 +24,9 @@ if [[ "$sub" == "convert" ]]; then
   fi
   args+=(--to "$INPUT_TO")
   [[ -n "${INPUT_OUTPUT_FORMAT:-}" ]] && args+=(--output-format "$INPUT_OUTPUT_FORMAT")
+  while IFS= read -r v; do
+    [[ -n "$v" ]] && args+=(--merge "$v")
+  done <<< "${INPUT_MERGE:-}"
 fi
 
 if [[ "$sub" == "validate" ]]; then
