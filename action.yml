@@ -18,6 +18,9 @@ inputs:
     description: 'Newline-separated list of additional specs to merge on top of the base (convert only). Each source is upconverted to the target version, then merged in incoming-order.'
   merge-options:
     description: 'Whitespace-separated merge options (convert only, requires merge): base-wins, error-on-conflict, deep-merge-object-schemas, merge-info, replace-lists-when-empty.'
+  collapse:
+    description: 'Lift inline components into the root bag and replace call sites with $refs (convert only).'
+    default: 'false'
   load:
     description: 'Whitespace-separated $ref loaders to enable: file, http'
   ignore:

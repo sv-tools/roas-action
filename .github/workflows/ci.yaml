@@ -78,7 +78,7 @@ jobs:
             exit 1
           }
 
-      - name: convert with merge overlay
+      - name: convert with merge overlay and collapse
         uses: ./
         with:
           subcommand: convert
@@ -86,6 +86,7 @@ jobs:
           to: v3_2
           merge: tests/fixtures/overlay-v3_0.yaml
           merge-options: deep-merge-object-schemas
+          collapse: 'true'
           output-file: merged.yaml
 
       - name: assert merged output contains base + overlay paths

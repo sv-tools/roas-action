@@ -64,8 +64,9 @@ Layer overlay specs on top of a base via `merge`:
 | `to`            | yes\*    | —          | convert    | Target version for `convert`. Required when `subcommand: convert`.                            |
 | `merge`         | no       | —          | convert    | Newline-separated list of overlay specs to merge on top of the base after version conversion. |
 | `merge-options` | no       | —          | convert    | Whitespace-separated merge options (requires `merge`). See [merge options](#merge-options).   |
+| `collapse`      | no       | `false`    | convert    | Lift inline components into the root bag and replace call sites with `$ref`s.                 |
 | `format`        | no       | auto       | both       | Force input format: `json` or `yaml`. By default inferred from the file extension.            |
-| `load`          | no       | —          | validate   | Whitespace-separated list of `$ref` loaders to enable: `file`, `http`.                        |
+| `load`          | no       | —          | both\*\*   | Whitespace-separated `$ref` loaders: `file`, `http`. On `convert` requires `collapse: true`.  |
 | `ignore`        | no       | —          | validate   | Whitespace-separated validation checks to skip (see [check list](#validation-checks)).        |
 | `print`         | no       | `false`    | validate   | If `true`, echo the parsed spec on stdout (diagnostics stay on stderr).                       |
 | `output-format` | no       | match in   | convert    | Force output format: `json` or `yaml`.                                                        |

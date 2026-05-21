@@ -28,6 +28,10 @@ if [[ "$sub" == "convert" ]]; then
     [[ -n "$v" ]] && args+=(--merge "$v")
   done <<< "${INPUT_MERGE:-}"
   for v in ${INPUT_MERGE_OPTIONS:-}; do args+=(--merge-option "$v"); done
+  if [[ "${INPUT_COLLAPSE:-false}" == "true" ]]; then
+    args+=(--collapse)
+    for v in ${INPUT_LOAD:-}; do args+=(--load "$v"); done
+  fi
 fi
 
 if [[ "$sub" == "validate" ]]; then
