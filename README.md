@@ -1,7 +1,9 @@
 # roas-action
 
 GitHub Action that runs [`roas`](https://github.com/sv-tools/roas) to validate or
-convert OpenAPI specifications (Swagger 2.0, OpenAPI 3.0.x / 3.1.x / 3.2.x).
+convert OpenAPI specifications (Swagger 2.0, OpenAPI 3.0.x / 3.1.x / 3.2.x) and to
+validate, convert, or apply [OpenAPI Overlay](https://spec.openapis.org/overlay/latest.html)
+documents (Overlay 1.0 / 1.1).
 
 The action is Docker-based and wraps the official
 [`ghcr.io/sv-tools/roas`](https://github.com/sv-tools/roas/pkgs/container/roas)
@@ -40,7 +42,7 @@ Upconvert a spec to OpenAPI 3.2 and write the result next to the source:
     output-file: openapi.v3_2.yaml
 ```
 
-Layer overlay specs on top of a base via `merge`:
+Layer additional specs on top of a base via `merge`:
 
 ```yaml
 - uses: sv-tools/roas-action@v1
@@ -54,27 +56,85 @@ Layer overlay specs on top of a base via `merge`:
     output-file: openapi.merged.yaml
 ```
 
+Apply OpenAPI Overlay documents while converting (`apply` runs last in the
+pipeline: convert → merge → apply → collapse):
+
+```yaml
+- uses: sv-tools/roas-action@v1
+  with:
+    subcommand: convert
+    file: openapi.yaml
+    to: v3.2
+    apply: |
+      overlays/add-servers.overlay.yaml
+      overlays/redact-internal.overlay.yaml
+    output-file: openapi.overlaid.yaml
+```
+
+### Overlay documents
+
+Validate an OpenAPI Overlay document:
+
+```yaml
+- uses: sv-tools/roas-action@v1
+  with:
+    subcommand: overlay validate
+    file: overlays/add-servers.overlay.yaml
+```
+
+Upconvert an Overlay 1.0 document to Overlay 1.1:
+
+```yaml
+- uses: sv-tools/roas-action@v1
+  with:
+    subcommand: overlay convert
+    file: overlays/add-servers.overlay.yaml
+    to: v1.1
+    output-file: add-servers.v1_1.overlay.yaml
+```
+
+Apply one or more overlays to a target spec (`file` is the spec, `overlay`
+lists the overlays, applied in order):
+
+```yaml
+- uses: sv-tools/roas-action@v1
+  with:
+    subcommand: overlay apply
+    file: openapi.yaml
+    overlay: |
+      overlays/add-servers.overlay.yaml
+      overlays/redact-internal.overlay.yaml
+    output-file: openapi.overlaid.yaml
+```
+
 ## Inputs
 
-| Name            | Required | Default    | Applies to | Description                                                                                   |
-|-----------------|----------|------------|------------|-----------------------------------------------------------------------------------------------|
-| `subcommand`    | no       | `validate` | both       | `validate` or `convert`.                                                                      |
-| `file`          | yes      | —          | both       | Path to the OpenAPI spec (JSON or YAML), relative to the repo root.                           |
-| `from`          | no       | —          | both       | Force the input spec version. One of `v2`, `v3.0`, `v3.1`, `v3.2`.                            |
-| `to`            | yes\*    | —          | convert    | Target version for `convert`. Required when `subcommand: convert`.                            |
-| `merge`         | no       | —          | convert    | Newline-separated list of overlay specs to merge on top of the base after version conversion. |
-| `merge-options` | no       | —          | convert    | Whitespace-separated merge options (requires `merge`). See [merge options](#merge-options).   |
-| `collapse`      | no       | `false`    | convert    | Lift inline components into the root bag and replace call sites with `$ref`s.                 |
-| `format`        | no       | auto       | both       | Force input format: `json` or `yaml`. By default inferred from the file extension.            |
-| `load`          | no       | —          | both\*\*   | Whitespace-separated `$ref` loaders: `file`, `http`. On `convert` requires `collapse: true`.  |
-| `ignore`        | no       | —          | validate   | Whitespace-separated validation checks to skip (see [check list](#validation-checks)).        |
-| `print`         | no       | `false`    | validate   | If `true`, echo the parsed spec on stdout (diagnostics stay on stderr).                       |
-| `output-format` | no       | match in   | convert    | Force output format: `json` or `yaml`.                                                        |
-| `output-file`   | no       | stdout     | convert    | Write the converted spec to this path. If unset, output streams to the action log.            |
+"Applies to" abbreviations: **V** = `validate`, **C** = `convert`,
+**OV** = `overlay validate`, **OC** = `overlay convert`, **OA** = `overlay apply`.
+
+| Name            | Required | Default    | Applies to     | Description                                                                                        |
+|-----------------|----------|------------|----------------|----------------------------------------------------------------------------------------------------|
+| `subcommand`    | no       | `validate` | —              | `validate`, `convert`, `overlay validate`, `overlay convert`, or `overlay apply`.                  |
+| `file`          | yes      | —          | all            | Positional input: the spec (V, C, OA) or the Overlay document (OV, OC), relative to the repo root. |
+| `from`          | no       | —          | V, C           | Force the input spec version. One of `v2`, `v3.0`, `v3.1`, `v3.2`.                                 |
+| `to`            | yes\*    | —          | C, OC          | Target version. For C: `v3.0`/`v3.1`/`v3.2` etc. For OC: `v1.0`/`v1.1`. Required for both.         |
+| `merge`         | no       | —          | C              | Newline-separated list of specs to merge on top of the base after version conversion.              |
+| `merge-options` | no       | —          | C              | Whitespace-separated merge options (requires `merge`). See [merge options](#merge-options).        |
+| `apply`         | no       | —          | C              | Newline-separated Overlay documents to apply after merge (before collapse).                        |
+| `overlay`       | yes\*    | —          | OA             | Newline-separated Overlay documents to apply to the spec. Required when `subcommand: overlay apply`.|
+| `apply-options` | no       | —          | C, OA          | Whitespace-separated overlay apply options. See [overlay apply options](#overlay-apply-options).   |
+| `collapse`      | no       | `false`    | C              | Lift inline components into the root bag and replace call sites with `$ref`s.                       |
+| `format`        | no       | auto       | all            | Force input format: `json` or `yaml`. By default inferred from the file extension.                 |
+| `load`          | no       | —          | V, C\*\*       | Whitespace-separated `$ref` loaders: `file`, `http`. On `convert` requires `collapse: true`.       |
+| `ignore`        | no       | —          | V, OV          | Whitespace-separated checks to skip. See [validation checks](#validation-checks).                  |
+| `print`         | no       | `false`    | V, OV          | If `true`, echo the parsed spec/overlay on stdout (diagnostics stay on stderr).                    |
+| `output-format` | no       | match in   | C, OC, OA      | Force output format: `json` or `yaml`.                                                             |
+| `output-file`   | no       | stdout     | all            | Write command output to this path. If unset, output streams to the action log.                    |
 
 ### Validation checks
 
-Values accepted by `ignore` (passed straight through to `roas validate --ignore`):
+For `validate`, values accepted by `ignore` (passed straight through to
+`roas validate --ignore`):
 
 ```
 missing-tags, external-references, invalid-urls, non-uniq-operation-ids,
@@ -86,7 +146,21 @@ empty-info-title, empty-info-version, empty-response-description,
 empty-external-documentation-url
 ```
 
-Run `roas validate --help` for the description of each check.
+For `overlay validate`, `ignore` accepts only `empty-info-title` and
+`empty-info-version`.
+
+Run `roas validate --help` (or `roas overlay validate --help`) for the
+description of each check.
+
+### Overlay apply options
+
+Values accepted by `apply-options` (passed straight through as
+`--apply-option`, for `convert` with `apply` and for `overlay apply`):
+
+- `error-on-zero-match` — fail when an action's `target` JSONPath selects zero
+  nodes. By default a zero-match action is a no-op (per the Overlay spec).
+- `error-on-mixed-kind-match` — fail when an `update` action's `target` selects
+  a mix of objects and arrays. Normative in Overlay 1.1; this opts 1.0 in.
 
 ### Merge options
 

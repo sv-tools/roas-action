@@ -66,7 +66,7 @@ jobs:
         with:
           subcommand: convert
           file: tests/fixtures/valid-v3_0.yaml
-          to: v3_2
+          to: v3.2
           output-file: converted.yaml
 
       - name: assert converted output looks like v3.2
@@ -83,7 +83,7 @@ jobs:
         with:
           subcommand: convert
           file: tests/fixtures/valid-v3_0.yaml
-          to: v3_2
+          to: v3.2
           merge: tests/fixtures/overlay-v3_0.yaml
           merge-options: deep-merge-object-schemas
           collapse: 'true'
@@ -95,6 +95,54 @@ jobs:
           grep -q '/ping:' merged.yaml || { echo "merged.yaml missing /ping path from base"; cat merged.yaml; exit 1; }
           grep -q '/pong:' merged.yaml || { echo "merged.yaml missing /pong path from overlay"; cat merged.yaml; exit 1; }
           echo "OK: merge combined base and overlay paths"
+
+      - name: overlay validate
+        uses: ./
+        with:
+          subcommand: overlay validate
+          file: tests/fixtures/overlay-doc-v1_0.yaml
+
+      - name: overlay apply to spec
+        uses: ./
+        with:
+          subcommand: overlay apply
+          file: tests/fixtures/valid-v3_0.yaml
+          overlay: tests/fixtures/overlay-doc-v1_0.yaml
+          output-file: overlaid.yaml
+
+      - name: assert overlay injected the description
+        run: |
+          test -s overlaid.yaml || { echo "::error::overlaid.yaml is empty or missing"; exit 1; }
+          grep -q 'Added by an overlay document' overlaid.yaml || {
+            echo "::error::overlaid.yaml missing the overlay-injected description"
+            cat overlaid.yaml
+            exit 1
+          }
+          echo "OK: overlay apply injected the description"
+
+      - name: convert with apply overlay
+        uses: ./
+        with:
+          subcommand: convert
+          file: tests/fixtures/valid-v3_0.yaml
+          to: v3.2
+          apply: tests/fixtures/overlay-doc-v1_0.yaml
+          output-file: converted-overlaid.yaml
+
+      - name: assert convert --apply output is v3.2 with the description
+        run: |
+          test -s converted-overlaid.yaml || { echo "::error::converted-overlaid.yaml is empty or missing"; exit 1; }
+          grep -q '^openapi: *3\.2' converted-overlaid.yaml || {
+            echo "::error::converted-overlaid.yaml does not declare openapi 3.2"
+            cat converted-overlaid.yaml
+            exit 1
+          }
+          grep -q 'Added by an overlay document' converted-overlaid.yaml || {
+            echo "::error::converted-overlaid.yaml missing the overlay-injected description"
+            cat converted-overlaid.yaml
+            exit 1
+          }
+          echo "OK: convert --apply produced v3.2 with the overlay description"
 
       - name: convert without 'to' must fail
         id: convert-noto
@@ -111,3 +159,19 @@ jobs:
             exit 1
           fi
           echo "OK: convert correctly rejected missing 'to' input"
+
+      - name: overlay apply without 'overlay' must fail
+        id: overlay-noov
+        continue-on-error: true
+        uses: ./
+        with:
+          subcommand: overlay apply
+          file: tests/fixtures/valid-v3_0.yaml
+
+      - name: assert overlay apply without 'overlay' failed
+        run: |
+          if [[ "${{ steps.overlay-noov.outcome }}" != "failure" ]]; then
+            echo "Expected overlay apply without 'overlay' to fail, got outcome=${{ steps.overlay-noov.outcome }}"
+            exit 1
+          fi
+          echo "OK: overlay apply correctly rejected missing 'overlay' input"

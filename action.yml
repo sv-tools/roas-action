@@ -1,38 +1,44 @@
 name: 'Roas OpenAPI Action'
-description: 'Validate and convert OpenAPI specs with roas'
+description: 'Validate and convert OpenAPI specs and Overlay documents with roas'
 branding:
   icon: 'check-circle'
   color: 'purple'
 inputs:
   subcommand:
-    description: 'roas subcommand: validate or convert'
+    description: 'roas subcommand: validate, convert, overlay validate, overlay convert, or overlay apply'
     default: 'validate'
   file:
-    description: 'Path to the OpenAPI spec (JSON or YAML)'
+    description: 'Positional input: the OpenAPI spec (validate, convert, overlay apply) or the Overlay document (overlay validate, overlay convert), as JSON or YAML'
     required: true
   from:
-    description: 'Force input spec version (e.g. v2, v3_0, v3_1, v3_2)'
+    description: 'Force input spec version (e.g. v2, v3.0, v3.1, v3.2). Spec validate/convert only.'
   to:
-    description: 'Target version for convert (e.g. v3_1, v3_2). Required when subcommand=convert.'
+    description: 'Target version. For convert: a spec version (e.g. v3.1, v3.2). For overlay convert: an overlay version (v1.0, v1.1). Required for convert and overlay convert.'
   merge:
     description: 'Newline-separated list of additional specs to merge on top of the base (convert only). Each source is upconverted to the target version, then merged in incoming-order.'
   merge-options:
     description: 'Whitespace-separated merge options (convert only, requires merge): base-wins, error-on-conflict, deep-merge-object-schemas, merge-info, replace-lists-when-empty.'
+  apply:
+    description: 'Newline-separated list of Overlay documents to apply on top of the converted/merged spec (convert only). Applied in order, last in the pipeline (after merge, before collapse).'
+  overlay:
+    description: 'Newline-separated list of Overlay documents to apply to the target spec (overlay apply only). Applied in order. Required when subcommand=overlay apply.'
+  apply-options:
+    description: 'Whitespace-separated overlay apply options (convert with apply, or overlay apply): error-on-zero-match, error-on-mixed-kind-match.'
   collapse:
     description: 'Lift inline components into the root bag and replace call sites with $refs (convert only).'
     default: 'false'
   load:
     description: 'Whitespace-separated $ref loaders to enable: file, http'
   ignore:
-    description: 'Whitespace-separated validation checks to skip (validate only)'
+    description: 'Whitespace-separated checks to skip. validate: validation checks. overlay validate: empty-info-title, empty-info-version.'
   format:
     description: 'Force input format: json or yaml'
   output-format:
-    description: 'Force output format for convert: json or yaml'
+    description: 'Force output format for convert, overlay convert, and overlay apply: json or yaml'
   output-file:
-    description: 'Write convert output to this path instead of stdout'
+    description: 'Write command output to this path instead of stdout'
   print:
-    description: 'Echo parsed spec on stdout (validate only)'
+    description: 'Echo the parsed spec/overlay on stdout (validate and overlay validate only)'
     default: 'false'
 runs:
   using: 'docker'
@@ -41,3 +47,4 @@ runs:
     INPUT_OUTPUT_FILE: ${{ inputs.output-file }}
     INPUT_OUTPUT_FORMAT: ${{ inputs.output-format }}
     INPUT_MERGE_OPTIONS: ${{ inputs.merge-options }}
+    INPUT_APPLY_OPTIONS: ${{ inputs.apply-options }}
