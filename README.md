@@ -1,9 +1,11 @@
 # roas-action
 
 GitHub Action that runs [`roas`](https://github.com/sv-tools/roas) to validate or
-convert OpenAPI specifications (Swagger 2.0, OpenAPI 3.0.x / 3.1.x / 3.2.x) and to
+convert OpenAPI specifications (Swagger 2.0, OpenAPI 3.0.x / 3.1.x / 3.2.x), to
 validate, convert, or apply [OpenAPI Overlay](https://spec.openapis.org/overlay/latest.html)
-documents (Overlay 1.0 / 1.1).
+documents (Overlay 1.0 / 1.1), and to validate or convert
+[OpenAPI Arazzo](https://spec.openapis.org/arazzo/latest.html) workflow
+descriptions (Arazzo 1.0 / 1.1).
 
 The action is Docker-based and wraps the official
 [`ghcr.io/sv-tools/roas`](https://github.com/sv-tools/roas/pkgs/container/roas)
@@ -107,29 +109,57 @@ lists the overlays, applied in order):
     output-file: openapi.overlaid.yaml
 ```
 
+### Arazzo descriptions
+
+Arazzo *describes* sequences of API calls; unlike Overlay there is no
+transform/apply step, so the group is just `validate` and `convert`
+(upconvert 1.0 → 1.1). The version is detected from the top-level `arazzo`
+field.
+
+Validate an Arazzo workflow description:
+
+```yaml
+- uses: sv-tools/roas-action@v1
+  with:
+    subcommand: arazzo validate
+    file: workflows/checkout.arazzo.yaml
+```
+
+Upconvert an Arazzo 1.0 description to Arazzo 1.1:
+
+```yaml
+- uses: sv-tools/roas-action@v1
+  with:
+    subcommand: arazzo convert
+    file: workflows/checkout.arazzo.yaml
+    to: v1.1
+    output-file: checkout.v1_1.arazzo.yaml
+```
+
 ## Inputs
 
 "Applies to" abbreviations: **V** = `validate`, **C** = `convert`,
-**OV** = `overlay validate`, **OC** = `overlay convert`, **OA** = `overlay apply`.
+**OV** = `overlay validate`, **OC** = `overlay convert`, **OA** = `overlay apply`,
+**AV** = `arazzo validate`, **AC** = `arazzo convert`.
 
-| Name            | Required | Default    | Applies to     | Description                                                                                        |
-|-----------------|----------|------------|----------------|----------------------------------------------------------------------------------------------------|
-| `subcommand`    | no       | `validate` | —              | `validate`, `convert`, `overlay validate`, `overlay convert`, or `overlay apply`.                  |
-| `file`          | yes      | —          | all            | Positional input: the spec (V, C, OA) or the Overlay document (OV, OC), relative to the repo root. |
-| `from`          | no       | —          | V, C           | Force the input spec version. One of `v2`, `v3.0`, `v3.1`, `v3.2`.                                 |
-| `to`            | yes\*    | —          | C, OC          | Target version. For C: `v3.0`/`v3.1`/`v3.2` etc. For OC: `v1.0`/`v1.1`. Required for both.         |
-| `merge`         | no       | —          | C              | Newline-separated list of specs to merge on top of the base after version conversion.              |
-| `merge-options` | no       | —          | C              | Whitespace-separated merge options (requires `merge`). See [merge options](#merge-options).        |
-| `apply`         | no       | —          | C              | Newline-separated Overlay documents to apply after merge (before collapse).                        |
-| `overlay`       | yes\*    | —          | OA             | Newline-separated Overlay documents to apply to the spec. Required when `subcommand: overlay apply`.|
-| `apply-options` | no       | —          | C, OA          | Whitespace-separated overlay apply options. See [overlay apply options](#overlay-apply-options).   |
-| `collapse`      | no       | `false`    | C              | Lift inline components into the root bag and replace call sites with `$ref`s.                       |
-| `format`        | no       | auto       | all            | Force input format: `json` or `yaml`. By default inferred from the file extension.                 |
-| `load`          | no       | —          | V, C\*\*       | Whitespace-separated `$ref` loaders: `file`, `http`. On `convert` requires `collapse: true`.       |
-| `ignore`        | no       | —          | V, OV          | Whitespace-separated checks to skip. See [validation checks](#validation-checks).                  |
-| `print`         | no       | `false`    | V, OV          | If `true`, echo the parsed spec/overlay on stdout (diagnostics stay on stderr).                    |
-| `output-format` | no       | match in   | C, OC, OA      | Force output format: `json` or `yaml`.                                                             |
-| `output-file`   | no       | stdout     | all            | Write command output to this path. If unset, output streams to the action log.                    |
+| Name            | Required | Default    | Applies to    | Description                                                                                                                          |
+|-----------------|----------|------------|---------------|--------------------------------------------------------------------------------------------------------------------------------------|
+| `subcommand`    | no       | `validate` | —             | `validate`, `convert`, `overlay validate`, `overlay convert`, `overlay apply`, `arazzo validate`, or `arazzo convert`.               |
+| `file`          | yes      | —          | all           | Positional input: the spec (V, C, OA), the Overlay document (OV, OC), or the Arazzo description (AV, AC), relative to the repo root. |
+| `from`          | no       | —          | V, C          | Force the input spec version. One of `v2`, `v3.0`, `v3.1`, `v3.2`.                                                                   |
+| `to`            | yes\*    | —          | C, OC, AC     | Target version. For C: `v3.0`/`v3.1`/`v3.2` etc. For OC and AC: `v1.0`/`v1.1`. Required for all three.                               |
+| `merge`         | no       | —          | C             | Newline-separated list of specs to merge on top of the base after version conversion.                                                |
+| `merge-options` | no       | —          | C             | Whitespace-separated merge options (requires `merge`). See [merge options](#merge-options).                                          |
+| `apply`         | no       | —          | C             | Newline-separated Overlay documents to apply after merge (before collapse).                                                          |
+| `overlay`       | yes\*    | —          | OA            | Newline-separated Overlay documents to apply to the spec. Required when `subcommand: overlay apply`.                                 |
+| `apply-options` | no       | —          | C, OA         | Whitespace-separated overlay apply options. See [overlay apply options](#overlay-apply-options).                                     |
+| `collapse`      | no       | `false`    | C             | Lift inline components into the root bag and replace call sites with `$ref`s.                                                        |
+| `format`        | no       | auto       | all           | Force input format: `json` or `yaml`. By default inferred from the file extension.                                                   |
+| `load`          | no       | —          | V, C\*\*      | Whitespace-separated `$ref` loaders: `file`, `http`. On `convert` requires `collapse: true`.                                         |
+| `ignore`        | no       | —          | V, OV, AV     | Whitespace-separated checks to skip. See [validation checks](#validation-checks).                                                    |
+| `print`         | no       | `false`    | V, OV, AV     | If `true`, echo the parsed spec/overlay/description on stdout (diagnostics stay on stderr).                                          |
+| `output-format` | no       | match in   | C, OC, OA, AC | Force output format: `json` or `yaml`.                                                                                               |
+| `output-file`   | no       | stdout     | all           | Write command output to this path. If unset, output streams to the action log.                                                       |
 
 ### Validation checks
 
@@ -146,11 +176,11 @@ empty-info-title, empty-info-version, empty-response-description,
 empty-external-documentation-url
 ```
 
-For `overlay validate`, `ignore` accepts only `empty-info-title` and
-`empty-info-version`.
+For `overlay validate` and `arazzo validate`, `ignore` accepts only
+`empty-info-title` and `empty-info-version`.
 
-Run `roas validate --help` (or `roas overlay validate --help`) for the
-description of each check.
+Run `roas validate --help` (or `roas overlay validate --help` /
+`roas arazzo validate --help`) for the description of each check.
 
 ### Overlay apply options
 

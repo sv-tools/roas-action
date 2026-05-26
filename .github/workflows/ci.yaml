@@ -175,3 +175,59 @@ jobs:
             exit 1
           fi
           echo "OK: overlay apply correctly rejected missing 'overlay' input"
+
+      - name: arazzo validate
+        uses: ./
+        with:
+          subcommand: arazzo validate
+          file: tests/fixtures/arazzo-v1_0.yaml
+
+      - name: arazzo validate must fail on invalid description
+        id: arazzo-invalid
+        continue-on-error: true
+        uses: ./
+        with:
+          subcommand: arazzo validate
+          file: tests/fixtures/arazzo-invalid.yaml
+
+      - name: assert invalid arazzo description failed
+        run: |
+          if [[ "${{ steps.arazzo-invalid.outcome }}" != "failure" ]]; then
+            echo "Expected arazzo validate to fail on tests/fixtures/arazzo-invalid.yaml, got outcome=${{ steps.arazzo-invalid.outcome }}"
+            exit 1
+          fi
+          echo "OK: arazzo validate correctly rejected arazzo-invalid.yaml"
+
+      - name: arazzo convert v1.0 to v1.1
+        uses: ./
+        with:
+          subcommand: arazzo convert
+          file: tests/fixtures/arazzo-v1_0.yaml
+          to: v1.1
+          output-file: converted-arazzo.yaml
+
+      - name: assert converted arazzo declares version 1.1
+        run: |
+          test -s converted-arazzo.yaml || { echo "::error::converted-arazzo.yaml is empty or missing"; exit 1; }
+          grep -qE '^arazzo:[[:space:]]*.?1\.1' converted-arazzo.yaml || {
+            echo "::error::converted-arazzo.yaml does not declare arazzo 1.1"
+            cat converted-arazzo.yaml
+            exit 1
+          }
+          echo "OK: arazzo convert produced a 1.1 description"
+
+      - name: arazzo convert without 'to' must fail
+        id: arazzo-noto
+        continue-on-error: true
+        uses: ./
+        with:
+          subcommand: arazzo convert
+          file: tests/fixtures/arazzo-v1_0.yaml
+
+      - name: assert arazzo convert without 'to' failed
+        run: |
+          if [[ "${{ steps.arazzo-noto.outcome }}" != "failure" ]]; then
+            echo "Expected arazzo convert without 'to' to fail, got outcome=${{ steps.arazzo-noto.outcome }}"
+            exit 1
+          fi
+          echo "OK: arazzo convert correctly rejected missing 'to' input"

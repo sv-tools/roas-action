@@ -3,7 +3,7 @@ set -euo pipefail
 
 sub="${INPUT_SUBCOMMAND:-validate}"
 case "$sub" in
-  validate|convert|"overlay validate"|"overlay convert"|"overlay apply") ;;
+  validate|convert|"overlay validate"|"overlay convert"|"overlay apply"|"arazzo validate"|"arazzo convert") ;;
   *) echo "roas-action: unknown subcommand: $sub" >&2; exit 2 ;;
 esac
 
@@ -71,6 +71,20 @@ case "$sub" in
       [[ -n "$v" ]] && args+=(--overlay "$v")
     done <<< "${INPUT_OVERLAY:-}"
     for v in ${INPUT_APPLY_OPTIONS:-}; do args+=(--apply-option "$v"); done
+    [[ -n "${INPUT_OUTPUT_FORMAT:-}" ]] && args+=(--output-format "$INPUT_OUTPUT_FORMAT")
+    ;;
+
+  "arazzo validate")
+    for v in ${INPUT_IGNORE:-}; do args+=(--ignore "$v"); done
+    [[ "${INPUT_PRINT:-false}" == "true" ]] && args+=(--print)
+    ;;
+
+  "arazzo convert")
+    if [[ -z "${INPUT_TO:-}" ]]; then
+      echo "roas-action: 'to' is required when subcommand='arazzo convert'" >&2
+      exit 2
+    fi
+    args+=(--to "$INPUT_TO")
     [[ -n "${INPUT_OUTPUT_FORMAT:-}" ]] && args+=(--output-format "$INPUT_OUTPUT_FORMAT")
     ;;
 esac

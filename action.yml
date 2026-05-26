@@ -5,15 +5,15 @@ branding:
   color: 'purple'
 inputs:
   subcommand:
-    description: 'roas subcommand: validate, convert, overlay validate, overlay convert, or overlay apply'
+    description: 'roas subcommand: validate, convert, overlay validate, overlay convert, overlay apply, arazzo validate, or arazzo convert'
     default: 'validate'
   file:
-    description: 'Positional input: the OpenAPI spec (validate, convert, overlay apply) or the Overlay document (overlay validate, overlay convert), as JSON or YAML'
+    description: 'Positional input: the OpenAPI spec (validate, convert, overlay apply), the Overlay document (overlay validate, overlay convert), or the Arazzo description (arazzo validate, arazzo convert), as JSON or YAML'
     required: true
   from:
     description: 'Force input spec version (e.g. v2, v3.0, v3.1, v3.2). Spec validate/convert only.'
   to:
-    description: 'Target version. For convert: a spec version (e.g. v3.1, v3.2). For overlay convert: an overlay version (v1.0, v1.1). Required for convert and overlay convert.'
+    description: 'Target version. For convert: a spec version (e.g. v3.1, v3.2). For overlay convert: an overlay version (v1.0, v1.1). For arazzo convert: an arazzo version (v1.0, v1.1). Required for convert, overlay convert, and arazzo convert.'
   merge:
     description: 'Newline-separated list of additional specs to merge on top of the base (convert only). Each source is upconverted to the target version, then merged in incoming-order.'
   merge-options:
@@ -30,15 +30,15 @@ inputs:
   load:
     description: 'Whitespace-separated $ref loaders to enable: file, http'
   ignore:
-    description: 'Whitespace-separated checks to skip. validate: validation checks. overlay validate: empty-info-title, empty-info-version.'
+    description: 'Whitespace-separated checks to skip. validate: validation checks. overlay validate / arazzo validate: empty-info-title, empty-info-version.'
   format:
     description: 'Force input format: json or yaml'
   output-format:
-    description: 'Force output format for convert, overlay convert, and overlay apply: json or yaml'
+    description: 'Force output format for convert, overlay convert, overlay apply, and arazzo convert: json or yaml'
   output-file:
     description: 'Write command output to this path instead of stdout'
   print:
-    description: 'Echo the parsed spec/overlay on stdout (validate and overlay validate only)'
+    description: 'Echo the parsed spec/overlay/description on stdout (validate, overlay validate, and arazzo validate only)'
     default: 'false'
 runs:
   using: 'docker'
