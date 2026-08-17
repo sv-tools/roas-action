@@ -1,0 +1,12 @@
+asyncapi: "3.0.0"
+info:
+  title: Streetlights
+  version: "1.0.0"
+channels:
+  lightMeasured:
+    address: light/measured
+    # Invalid by default: `streetlightId` never appears as a
+    # {placeholder} in the address. Relaxed by the
+    # `unused-channel-parameter` check.
+    parameters:
+      streetlightId: {}

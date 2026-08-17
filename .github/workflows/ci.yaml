@@ -231,3 +231,89 @@ jobs:
             exit 1
           fi
           echo "OK: arazzo convert correctly rejected missing 'to' input"
+
+      - name: asyncapi validate
+        uses: ./
+        with:
+          subcommand: asyncapi validate
+          file: tests/fixtures/asyncapi-v2_6.yaml
+
+      - name: asyncapi validate must fail on an unused channel parameter
+        id: asyncapi-invalid
+        continue-on-error: true
+        uses: ./
+        with:
+          subcommand: asyncapi validate
+          file: tests/fixtures/asyncapi-unused-parameter.yaml
+
+      - name: assert invalid asyncapi document failed
+        run: |
+          if [[ "${{ steps.asyncapi-invalid.outcome }}" != "failure" ]]; then
+            echo "Expected asyncapi validate to fail on tests/fixtures/asyncapi-unused-parameter.yaml, got outcome=${{ steps.asyncapi-invalid.outcome }}"
+            exit 1
+          fi
+          echo "OK: asyncapi validate correctly rejected asyncapi-unused-parameter.yaml"
+
+      - name: asyncapi validate with the check relaxed
+        uses: ./
+        with:
+          subcommand: asyncapi validate
+          file: tests/fixtures/asyncapi-unused-parameter.yaml
+          check: unused-channel-parameter
+
+      - name: asyncapi convert v2.6 to v3.0
+        uses: ./
+        with:
+          subcommand: asyncapi convert
+          file: tests/fixtures/asyncapi-v2_6.yaml
+          to: v3.0
+          output-file: converted-asyncapi.yaml
+
+      - name: assert converted asyncapi declares version 3.0
+        run: |
+          test -s converted-asyncapi.yaml || { echo "::error::converted-asyncapi.yaml is empty or missing"; exit 1; }
+          grep -qE '^asyncapi:[[:space:]]*.?3\.0' converted-asyncapi.yaml || {
+            echo "::error::converted-asyncapi.yaml does not declare asyncapi 3.0"
+            cat converted-asyncapi.yaml
+            exit 1
+          }
+          grep -q 'address: light/measured' converted-asyncapi.yaml || {
+            echo "::error::converted-asyncapi.yaml missing the v3 channel address"
+            cat converted-asyncapi.yaml
+            exit 1
+          }
+          echo "OK: asyncapi convert produced a 3.0 document"
+
+      - name: asyncapi convert with 'strict' must fail on a lossy conversion
+        id: asyncapi-strict
+        continue-on-error: true
+        uses: ./
+        with:
+          subcommand: asyncapi convert
+          file: tests/fixtures/asyncapi-v2_6.yaml
+          to: v3.0
+          strict: 'true'
+
+      - name: assert strict asyncapi convert failed
+        run: |
+          if [[ "${{ steps.asyncapi-strict.outcome }}" != "failure" ]]; then
+            echo "Expected asyncapi convert with strict to fail on a lossy 2.6 conversion, got outcome=${{ steps.asyncapi-strict.outcome }}"
+            exit 1
+          fi
+          echo "OK: asyncapi convert correctly refused a lossy conversion under 'strict'"
+
+      - name: asyncapi convert without 'to' must fail
+        id: asyncapi-noto
+        continue-on-error: true
+        uses: ./
+        with:
+          subcommand: asyncapi convert
+          file: tests/fixtures/asyncapi-v2_6.yaml
+
+      - name: assert asyncapi convert without 'to' failed
+        run: |
+          if [[ "${{ steps.asyncapi-noto.outcome }}" != "failure" ]]; then
+            echo "Expected asyncapi convert without 'to' to fail, got outcome=${{ steps.asyncapi-noto.outcome }}"
+            exit 1
+          fi
+          echo "OK: asyncapi convert correctly rejected missing 'to' input"

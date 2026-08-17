@@ -3,7 +3,7 @@ set -euo pipefail
 
 sub="${INPUT_SUBCOMMAND:-validate}"
 case "$sub" in
-  validate|convert|"overlay validate"|"overlay convert"|"overlay apply"|"arazzo validate"|"arazzo convert") ;;
+  validate|convert|"overlay validate"|"overlay convert"|"overlay apply"|"arazzo validate"|"arazzo convert"|"asyncapi validate"|"asyncapi convert") ;;
   *) echo "roas-action: unknown subcommand: $sub" >&2; exit 2 ;;
 esac
 
@@ -86,6 +86,26 @@ case "$sub" in
     fi
     args+=(--to "$INPUT_TO")
     [[ -n "${INPUT_OUTPUT_FORMAT:-}" ]] && args+=(--output-format "$INPUT_OUTPUT_FORMAT")
+    ;;
+
+  # AsyncAPI takes --check rather than --ignore: `external-reference`
+  # adds a check instead of skipping one.
+  "asyncapi validate")
+    for v in ${INPUT_CHECK:-}; do args+=(--check "$v"); done
+    [[ "${INPUT_PRINT:-false}" == "true" ]] && args+=(--print)
+    ;;
+
+  "asyncapi convert")
+    if [[ -z "${INPUT_TO:-}" ]]; then
+      echo "roas-action: 'to' is required when subcommand='asyncapi convert'" >&2
+      exit 2
+    fi
+    args+=(--to "$INPUT_TO")
+    [[ -n "${INPUT_OUTPUT_FORMAT:-}" ]] && args+=(--output-format "$INPUT_OUTPUT_FORMAT")
+    # 2.6 -> 3.x is lossy; the report goes to stderr, so output-file is
+    # unaffected by either flag.
+    [[ "${INPUT_STRICT:-false}" == "true" ]] && args+=(--strict)
+    [[ "${INPUT_QUIET:-false}" == "true" ]] && args+=(--quiet)
     ;;
 esac
 
