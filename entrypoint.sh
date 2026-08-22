@@ -1,9 +1,19 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-sub="${INPUT_SUBCOMMAND:-validate}"
+sub="${INPUT_SUBCOMMAND:-openapi validate}"
+
+# roas 0.12 moved OpenAPI's validate/convert under an `openapi` group of
+# their own, so every specification is addressed the same way. The bare
+# spellings stay accepted here, mapped to the new ones, so workflows
+# written against earlier releases keep working.
 case "$sub" in
-  validate|convert|"overlay validate"|"overlay convert"|"overlay apply"|"arazzo validate"|"arazzo convert"|"arazzo run"|"arazzo list"|"asyncapi validate"|"asyncapi convert") ;;
+  validate) sub="openapi validate" ;;
+  convert)  sub="openapi convert"  ;;
+esac
+
+case "$sub" in
+  "openapi validate"|"openapi convert"|"overlay validate"|"overlay convert"|"overlay apply"|"arazzo validate"|"arazzo convert"|"arazzo run"|"arazzo list"|"asyncapi validate"|"asyncapi convert") ;;
   *) echo "roas-action: unknown subcommand: $sub" >&2; exit 2 ;;
 esac
 
@@ -19,16 +29,16 @@ read -ra args <<< "$sub"
 [[ -n "${INPUT_FORMAT:-}" ]] && args+=(--format "$INPUT_FORMAT")
 
 case "$sub" in
-  validate)
+  "openapi validate")
     [[ -n "${INPUT_FROM:-}" ]] && args+=(--from "$INPUT_FROM")
     for v in ${INPUT_LOAD:-};   do args+=(--load   "$v"); done
     for v in ${INPUT_IGNORE:-}; do args+=(--ignore "$v"); done
     [[ "${INPUT_PRINT:-false}" == "true" ]] && args+=(--print)
     ;;
 
-  convert)
+  "openapi convert")
     if [[ -z "${INPUT_TO:-}" ]]; then
-      echo "roas-action: 'to' is required when subcommand=convert" >&2
+      echo "roas-action: 'to' is required when subcommand='openapi convert'" >&2
       exit 2
     fi
     args+=(--to "$INPUT_TO")

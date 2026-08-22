@@ -30,7 +30,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - name: validate v3.0 spec
+      - name: validate v3.0 spec (default subcommand)
         uses: ./
         with:
           file: tests/fixtures/valid-v3_0.yaml
@@ -38,11 +38,13 @@ jobs:
       - name: validate v2 spec
         uses: ./
         with:
+          subcommand: openapi validate
           file: tests/fixtures/valid-v2.yaml
 
       - name: validate with ignored checks
         uses: ./
         with:
+          subcommand: openapi validate
           file: tests/fixtures/valid-v3_0.yaml
           ignore: missing-tags unused-tags
 
@@ -51,6 +53,7 @@ jobs:
         continue-on-error: true
         uses: ./
         with:
+          subcommand: openapi validate
           file: tests/fixtures/invalid.yaml
 
       - name: assert invalid spec failed
@@ -64,7 +67,7 @@ jobs:
       - name: convert v3.0 to v3.2
         uses: ./
         with:
-          subcommand: convert
+          subcommand: openapi convert
           file: tests/fixtures/valid-v3_0.yaml
           to: v3.2
           output-file: converted.yaml
@@ -81,7 +84,7 @@ jobs:
       - name: convert with merge overlay and collapse
         uses: ./
         with:
-          subcommand: convert
+          subcommand: openapi convert
           file: tests/fixtures/valid-v3_0.yaml
           to: v3.2
           merge: tests/fixtures/overlay-v3_0.yaml
@@ -95,6 +98,30 @@ jobs:
           grep -q '/ping:' merged.yaml || { echo "merged.yaml missing /ping path from base"; cat merged.yaml; exit 1; }
           grep -q '/pong:' merged.yaml || { echo "merged.yaml missing /pong path from overlay"; cat merged.yaml; exit 1; }
           echo "OK: merge combined base and overlay paths"
+
+      - name: legacy 'validate' spelling still works
+        uses: ./
+        with:
+          subcommand: validate
+          file: tests/fixtures/valid-v3_0.yaml
+
+      - name: legacy 'convert' spelling still works
+        uses: ./
+        with:
+          subcommand: convert
+          file: tests/fixtures/valid-v3_0.yaml
+          to: v3.2
+          output-file: converted-legacy.yaml
+
+      - name: assert the legacy convert spelling produced v3.2
+        run: |
+          test -s converted-legacy.yaml || { echo "::error::converted-legacy.yaml is empty or missing"; exit 1; }
+          grep -q '^openapi: *3\.2' converted-legacy.yaml || {
+            echo "::error::converted-legacy.yaml does not declare openapi 3.2"
+            cat converted-legacy.yaml
+            exit 1
+          }
+          echo "OK: the bare 'convert' spelling still reaches 'openapi convert'"
 
       - name: overlay validate
         uses: ./
@@ -123,7 +150,7 @@ jobs:
       - name: convert with apply overlay
         uses: ./
         with:
-          subcommand: convert
+          subcommand: openapi convert
           file: tests/fixtures/valid-v3_0.yaml
           to: v3.2
           apply: tests/fixtures/overlay-doc-v1_0.yaml
@@ -149,16 +176,16 @@ jobs:
         continue-on-error: true
         uses: ./
         with:
-          subcommand: convert
+          subcommand: openapi convert
           file: tests/fixtures/valid-v3_0.yaml
 
       - name: assert convert without 'to' failed
         run: |
           if [[ "${{ steps.convert-noto.outcome }}" != "failure" ]]; then
-            echo "Expected convert without 'to' to fail, got outcome=${{ steps.convert-noto.outcome }}"
+            echo "Expected openapi convert without 'to' to fail, got outcome=${{ steps.convert-noto.outcome }}"
             exit 1
           fi
-          echo "OK: convert correctly rejected missing 'to' input"
+          echo "OK: openapi convert correctly rejected missing 'to' input"
 
       - name: overlay apply without 'overlay' must fail
         id: overlay-noov

@@ -5,32 +5,32 @@ branding:
   color: 'purple'
 inputs:
   subcommand:
-    description: 'roas subcommand: validate, convert, overlay validate, overlay convert, overlay apply, arazzo validate, arazzo convert, arazzo run, arazzo list, asyncapi validate, or asyncapi convert'
-    default: 'validate'
+    description: 'roas subcommand: openapi validate, openapi convert, overlay validate, overlay convert, overlay apply, arazzo validate, arazzo convert, arazzo run, arazzo list, asyncapi validate, or asyncapi convert. The bare validate and convert are still accepted as aliases of the openapi ones.'
+    default: 'openapi validate'
   file:
-    description: 'Positional input: the OpenAPI spec (validate, convert, overlay apply), the Overlay document (overlay validate, overlay convert), the Arazzo description (arazzo validate, arazzo convert, arazzo run, arazzo list), or the AsyncAPI document (asyncapi validate, asyncapi convert), as JSON or YAML'
+    description: 'Positional input: the OpenAPI spec (openapi validate, openapi convert, overlay apply), the Overlay document (overlay validate, overlay convert), the Arazzo description (arazzo validate, arazzo convert, arazzo run, arazzo list), or the AsyncAPI document (asyncapi validate, asyncapi convert), as JSON or YAML'
     required: true
   from:
-    description: 'Force input spec version (e.g. v2, v3.0, v3.1, v3.2). Spec validate/convert only.'
+    description: 'Force input spec version (e.g. v2, v3.0, v3.1, v3.2). openapi validate/convert only.'
   to:
-    description: 'Target version. For convert: a spec version (e.g. v3.1, v3.2). For overlay convert: an overlay version (v1.0, v1.1). For arazzo convert: an arazzo version (v1.0, v1.1). For asyncapi convert: an AsyncAPI version (v2.6, v3.0, v3.1). Required for convert, overlay convert, arazzo convert, and asyncapi convert.'
+    description: 'Target version. For openapi convert: a spec version (e.g. v3.1, v3.2). For overlay convert: an overlay version (v1.0, v1.1). For arazzo convert: an arazzo version (v1.0, v1.1). For asyncapi convert: an AsyncAPI version (v2.6, v3.0, v3.1). Required for openapi convert, overlay convert, arazzo convert, and asyncapi convert.'
   merge:
-    description: 'Newline-separated list of additional specs to merge on top of the base (convert only). Each source is upconverted to the target version, then merged in incoming-order.'
+    description: 'Newline-separated list of additional specs to merge on top of the base (openapi convert only). Each source is upconverted to the target version, then merged in incoming-order.'
   merge-options:
-    description: 'Whitespace-separated merge options (convert only, requires merge): base-wins, error-on-conflict, deep-merge-object-schemas, merge-info, replace-lists-when-empty.'
+    description: 'Whitespace-separated merge options (openapi convert only, requires merge): base-wins, error-on-conflict, deep-merge-object-schemas, merge-info, replace-lists-when-empty.'
   apply:
-    description: 'Newline-separated list of Overlay documents to apply on top of the converted/merged spec (convert only). Applied in order, last in the pipeline (after merge, before collapse).'
+    description: 'Newline-separated list of Overlay documents to apply on top of the converted/merged spec (openapi convert only). Applied in order, last in the pipeline (after merge, before collapse).'
   overlay:
     description: 'Newline-separated list of Overlay documents to apply to the target spec (overlay apply only). Applied in order. Required when subcommand=overlay apply.'
   apply-options:
-    description: 'Whitespace-separated overlay apply options (convert with apply, or overlay apply): error-on-zero-match, error-on-mixed-kind-match.'
+    description: 'Whitespace-separated overlay apply options (openapi convert with apply, or overlay apply): error-on-zero-match, error-on-mixed-kind-match.'
   collapse:
-    description: 'Lift inline components into the root bag and replace call sites with $refs (convert only).'
+    description: 'Lift inline components into the root bag and replace call sites with $refs (openapi convert only).'
     default: 'false'
   load:
-    description: 'Whitespace-separated loaders to enable: file, http. On validate/convert these load $refs; on arazzo run they fetch the source descriptions the run needs.'
+    description: 'Whitespace-separated loaders to enable: file, http. On openapi validate/convert these load $refs; on arazzo run they fetch the source descriptions the run needs.'
   ignore:
-    description: 'Whitespace-separated checks to skip. validate: validation checks. overlay validate / arazzo validate / arazzo run: empty-info-title, empty-info-version. Not used by asyncapi validate, which takes check instead.'
+    description: 'Whitespace-separated checks to skip. openapi validate: validation checks. overlay validate / arazzo validate / arazzo run: empty-info-title, empty-info-version. Not used by asyncapi validate, which takes check instead.'
   check:
     description: 'Whitespace-separated validation checks to adjust (asyncapi validate only): empty-info-title, empty-info-version and unused-channel-parameter relax a check; external-reference adds one, requiring a self-contained document.'
   strict:
@@ -56,11 +56,11 @@ inputs:
   format:
     description: 'Force input format: json or yaml'
   output-format:
-    description: 'Force output format for convert, overlay convert, overlay apply, arazzo convert, arazzo run, and asyncapi convert: json or yaml'
+    description: 'Force output format for openapi convert, overlay convert, overlay apply, arazzo convert, arazzo run, and asyncapi convert: json or yaml'
   output-file:
     description: 'Write command output to this path instead of stdout'
   print:
-    description: 'Echo the parsed spec/overlay/description/document on stdout (validate, overlay validate, arazzo validate, and asyncapi validate only)'
+    description: 'Echo the parsed spec/overlay/description/document on stdout (openapi validate, overlay validate, arazzo validate, and asyncapi validate only)'
     default: 'false'
 runs:
   using: 'docker'

@@ -17,6 +17,8 @@ image.
 
 ### Validate
 
+`openapi validate` is the default, so the subcommand can be left out:
+
 ```yaml
 - uses: sv-tools/roas-action@v1
   with:
@@ -28,6 +30,7 @@ With external `$ref` loading and a few checks skipped:
 ```yaml
 - uses: sv-tools/roas-action@v1
   with:
+    subcommand: openapi validate
     file: openapi.yaml
     load: file http
     ignore: missing-tags unused-tags
@@ -40,7 +43,7 @@ Upconvert a spec to OpenAPI 3.2 and write the result next to the source:
 ```yaml
 - uses: sv-tools/roas-action@v1
   with:
-    subcommand: convert
+    subcommand: openapi convert
     file: openapi.yaml
     to: v3.2
     output-file: openapi.v3_2.yaml
@@ -51,7 +54,7 @@ Layer additional specs on top of a base via `merge`:
 ```yaml
 - uses: sv-tools/roas-action@v1
   with:
-    subcommand: convert
+    subcommand: openapi convert
     file: openapi.yaml
     to: v3.2
     merge: |
@@ -66,7 +69,7 @@ pipeline: convert → merge → apply → collapse):
 ```yaml
 - uses: sv-tools/roas-action@v1
   with:
-    subcommand: convert
+    subcommand: openapi convert
     file: openapi.yaml
     to: v3.2
     apply: |
@@ -170,7 +173,7 @@ when the workflow fails.
 The run needs the source descriptions the steps name. Either point at
 them directly with `source`, or let `load` fetch what the description
 already points at — `load: file` for paths beside it, `load: http` for
-remote URLs, exactly as on `validate`.
+remote URLs, exactly as on `openapi validate`.
 
 `input` values are read as JSON where they are JSON, so `petId=7` is a
 number and `petId=seven` a string; `inputs` takes a whole JSON or YAML
@@ -255,14 +258,14 @@ turns any note into a failure with nothing written to stdout:
 
 ## Inputs
 
-"Applies to" abbreviations: **V** = `validate`, **C** = `convert`,
+"Applies to" abbreviations: **V** = `openapi validate`, **C** = `openapi convert`,
 **OV** = `overlay validate`, **OC** = `overlay convert`, **OA** = `overlay apply`,
 **AV** = `arazzo validate`, **AC** = `arazzo convert`, **AR** = `arazzo run`,
 **AL** = `arazzo list`, **SV** = `asyncapi validate`, **SC** = `asyncapi convert`.
 
 | Name            | Required | Default    | Applies to            | Description                                                                                                                          |
 |-----------------|----------|------------|-----------------------|--------------------------------------------------------------------------------------------------------------------------------------|
-| `subcommand`    | no       | `validate` | —                     | `validate`, `convert`, `overlay validate`, `overlay convert`, `overlay apply`, `arazzo validate`, `arazzo convert`, `arazzo run`, `arazzo list`, `asyncapi validate`, or `asyncapi convert`. |
+| `subcommand`    | no       | `openapi validate` | —             | `openapi validate`, `openapi convert`, `overlay validate`, `overlay convert`, `overlay apply`, `arazzo validate`, `arazzo convert`, `arazzo run`, `arazzo list`, `asyncapi validate`, or `asyncapi convert`. The bare `validate` and `convert` still work — see [subcommand names](#subcommand-names). |
 | `file`          | yes      | —          | all                   | Positional input: the spec (V, C, OA), the Overlay document (OV, OC), the Arazzo description (AV, AC, AR, AL), or the AsyncAPI document (SV, SC), relative to the repo root. |
 | `from`          | no       | —          | V, C                  | Force the input spec version. One of `v2`, `v3.0`, `v3.1`, `v3.2`.                                                                   |
 | `to`            | yes\*    | —          | C, OC, AC, SC         | Target version. For C: `v3.0`/`v3.1`/`v3.2` etc. For OC and AC: `v1.0`/`v1.1`. For SC: `v2.6`/`v3.0`/`v3.1`. Required for all four.   |
@@ -280,7 +283,7 @@ turns any note into a failure with nothing written to stdout:
 | `header`        | no       | —          | AR                    | Newline-separated `Name: value` headers added to every request a step does not set itself.                                           |
 | `max-steps`     | no       | —          | AR                    | Stop the run after this many steps, in case a `goto` loops.                                                                          |
 | `format`        | no       | auto       | all                   | Force input format: `json` or `yaml`. By default inferred from the file extension.                                                   |
-| `load`          | no       | —          | V, C\*\*, AR          | Whitespace-separated loaders: `file`, `http`. On V/C they load `$ref`s (on `convert` requires `collapse: true`); on AR they fetch the source descriptions. |
+| `load`          | no       | —          | V, C\*\*, AR          | Whitespace-separated loaders: `file`, `http`. On V/C they load `$ref`s (on `openapi convert` requires `collapse: true`); on AR they fetch the source descriptions. |
 | `ignore`        | no       | —          | V, OV, AV, AR         | Whitespace-separated checks to skip. See [validation checks](#validation-checks).                                                    |
 | `check`         | no       | —          | SV                    | Whitespace-separated checks to adjust. See [AsyncAPI checks](#asyncapi-checks).                                                      |
 | `print`         | no       | `false`    | V, OV, AV, SV         | If `true`, echo the parsed spec/overlay/description/document on stdout (diagnostics stay on stderr).                                 |
@@ -291,8 +294,8 @@ turns any note into a failure with nothing written to stdout:
 
 ### Validation checks
 
-For `validate`, values accepted by `ignore` (passed straight through to
-`roas validate --ignore`):
+For `openapi validate`, values accepted by `ignore` (passed straight through
+to `roas openapi validate --ignore`):
 
 ```
 missing-tags, external-references, invalid-urls, non-uniq-operation-ids,
@@ -308,7 +311,7 @@ For `overlay validate`, `arazzo validate` and `arazzo run`, `ignore`
 accepts only `empty-info-title` and `empty-info-version`. (`arazzo run`
 validates the description before it makes any request.)
 
-Run `roas validate --help` (or `roas overlay validate --help` /
+Run `roas openapi validate --help` (or `roas overlay validate --help` /
 `roas arazzo validate --help`) for the description of each check.
 
 ### AsyncAPI checks
@@ -327,7 +330,7 @@ values adds a check rather than skipping one:
 ### Overlay apply options
 
 Values accepted by `apply-options` (passed straight through as
-`--apply-option`, for `convert` with `apply` and for `overlay apply`):
+`--apply-option`, for `openapi convert` with `apply` and for `overlay apply`):
 
 - `error-on-zero-match` — fail when an action's `target` JSONPath selects zero
   nodes. By default a zero-match action is a no-op (per the Overlay spec).
@@ -337,7 +340,7 @@ Values accepted by `apply-options` (passed straight through as
 ### Merge options
 
 Values accepted by `merge-options` (passed straight through as
-`roas convert --merge-option`; defaults are "incoming wins" on scalar conflicts,
+`roas openapi convert --merge-option`; defaults are "incoming wins" on scalar conflicts,
 base retains `info`/`openapi`, refs replace silently, schemas are leaves):
 
 - `base-wins` — reverse the default "incoming wins" policy.
@@ -345,6 +348,18 @@ base retains `info`/`openapi`, refs replace silently, schemas are leaves):
 - `deep-merge-object-schemas` — deep-merge object schemas instead of leaf-replace.
 - `merge-info` — allow `info`/`openapi`/`swagger` to merge instead of being preserved from base.
 - `replace-lists-when-empty` — allow an empty incoming list (`servers`, `security`, …) to clear a populated base list.
+
+### Subcommand names
+
+roas 0.12 gave OpenAPI a subcommand group of its own, so `roas validate`
+and `roas convert` became `roas openapi validate` and `roas openapi
+convert` — every specification is now addressed the same way. This action
+follows that naming, and still accepts the bare `validate` and `convert`
+as aliases, so workflows written against earlier releases keep working
+unchanged. New workflows should prefer the `openapi` spellings.
+
+`roas openapi preview` renders a description in a browser and is not
+wrapped by this action, having nowhere useful to open on a runner.
 
 ## How it works
 
