@@ -1,0 +1,54 @@
+arazzo: "1.0.1"
+info:
+  title: Echo
+  version: "1.0.0"
+sourceDescriptions:
+  - name: echo
+    url: ./arazzo-echo.openapi.yaml
+    type: openapi
+workflows:
+  - workflowId: echoOnce
+    summary: Send a message and read it back
+    inputs:
+      type: object
+      properties:
+        message:
+          type: string
+    steps:
+      - stepId: send
+        operationId: echoMessage
+        parameters:
+          - name: message
+            in: query
+            value: $inputs.message
+        successCriteria:
+          - condition: $statusCode == 200
+        outputs:
+          echoed: $response.body#/args/message
+    outputs:
+      echoed: $steps.send.outputs.echoed
+
+  # A second workflow, so `arazzo run` needs to be told which one.
+  - workflowId: echoTwice
+    inputs:
+      type: object
+      properties:
+        message:
+          type: string
+    steps:
+      - stepId: first
+        operationId: echoMessage
+        parameters:
+          - name: message
+            in: query
+            value: $inputs.message
+        successCriteria:
+          - condition: $statusCode == 200
+      - stepId: second
+        operationId: echoMessage
+        parameters:
+          - name: message
+            in: query
+            value: $steps.first.outputs.nothing
+        successCriteria:
+          - condition: $statusCode == 200

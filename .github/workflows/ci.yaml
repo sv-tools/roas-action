@@ -232,6 +232,70 @@ jobs:
           fi
           echo "OK: arazzo convert correctly rejected missing 'to' input"
 
+      - name: arazzo validate the run fixture
+        uses: ./
+        with:
+          subcommand: arazzo validate
+          file: tests/fixtures/arazzo-run.arazzo.yaml
+
+      - name: arazzo list
+        uses: ./
+        with:
+          subcommand: arazzo list
+          file: tests/fixtures/arazzo-run.arazzo.yaml
+          output-file: workflows.txt
+
+      - name: assert arazzo list named both workflows
+        run: |
+          test -s workflows.txt || { echo "::error::workflows.txt is empty or missing"; exit 1; }
+          for id in echoOnce echoTwice; do
+            grep -q "^$id\$" workflows.txt || {
+              echo "::error::workflows.txt does not list $id"
+              cat workflows.txt
+              exit 1
+            }
+          done
+          grep -q 'inputs: message (string)' workflows.txt || {
+            echo "::error::workflows.txt does not describe the workflow inputs"
+            cat workflows.txt
+            exit 1
+          }
+          echo "OK: arazzo list named both workflows and what they take"
+
+      - name: arazzo run without 'workflow' must fail when several are offered
+        id: arazzo-run-noworkflow
+        continue-on-error: true
+        uses: ./
+        with:
+          subcommand: arazzo run
+          file: tests/fixtures/arazzo-run.arazzo.yaml
+          load: file
+
+      - name: assert arazzo run without 'workflow' failed
+        run: |
+          if [[ "${{ steps.arazzo-run-noworkflow.outcome }}" != "failure" ]]; then
+            echo "Expected arazzo run to fail without 'workflow', got outcome=${{ steps.arazzo-run-noworkflow.outcome }}"
+            exit 1
+          fi
+          echo "OK: arazzo run correctly asked which workflow to run"
+
+      - name: arazzo run without a source description must fail
+        id: arazzo-run-nosource
+        continue-on-error: true
+        uses: ./
+        with:
+          subcommand: arazzo run
+          file: tests/fixtures/arazzo-run.arazzo.yaml
+          workflow: echoOnce
+
+      - name: assert arazzo run without a source description failed
+        run: |
+          if [[ "${{ steps.arazzo-run-nosource.outcome }}" != "failure" ]]; then
+            echo "Expected arazzo run to fail with neither 'source' nor 'load', got outcome=${{ steps.arazzo-run-nosource.outcome }}"
+            exit 1
+          fi
+          echo "OK: arazzo run correctly refused to run with no source description"
+
       - name: asyncapi validate
         uses: ./
         with:

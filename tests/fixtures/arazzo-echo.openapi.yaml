@@ -1,0 +1,19 @@
+openapi: 3.0.3
+info:
+  title: Echo
+  version: 1.0.0
+servers:
+  - url: http://echo.example.com
+paths:
+  /get:
+    get:
+      operationId: echoMessage
+      parameters:
+        - name: message
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: the query string, echoed back under `args`

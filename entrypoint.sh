@@ -3,7 +3,7 @@ set -euo pipefail
 
 sub="${INPUT_SUBCOMMAND:-validate}"
 case "$sub" in
-  validate|convert|"overlay validate"|"overlay convert"|"overlay apply"|"arazzo validate"|"arazzo convert"|"asyncapi validate"|"asyncapi convert") ;;
+  validate|convert|"overlay validate"|"overlay convert"|"overlay apply"|"arazzo validate"|"arazzo convert"|"arazzo run"|"arazzo list"|"asyncapi validate"|"asyncapi convert") ;;
   *) echo "roas-action: unknown subcommand: $sub" >&2; exit 2 ;;
 esac
 
@@ -86,6 +86,36 @@ case "$sub" in
     fi
     args+=(--to "$INPUT_TO")
     [[ -n "${INPUT_OUTPUT_FORMAT:-}" ]] && args+=(--output-format "$INPUT_OUTPUT_FORMAT")
+    ;;
+
+  # The one command that talks to an API rather than reading a
+  # document, so it is the one with somewhere to send the requests.
+  "arazzo run")
+    [[ -n "${INPUT_WORKFLOW:-}" ]] && args+=(--workflow "$INPUT_WORKFLOW")
+    # NAME=VALUE, NAME=PATH, NAME=URL and `Name: value` can all carry
+    # spaces, so these are newline-separated rather than whitespace.
+    while IFS= read -r v; do
+      [[ -n "$v" ]] && args+=(--input "$v")
+    done <<< "${INPUT_INPUT:-}"
+    [[ -n "${INPUT_INPUTS:-}" ]] && args+=(--inputs "$INPUT_INPUTS")
+    while IFS= read -r v; do
+      [[ -n "$v" ]] && args+=(--source "$v")
+    done <<< "${INPUT_SOURCE:-}"
+    while IFS= read -r v; do
+      [[ -n "$v" ]] && args+=(--base-url "$v")
+    done <<< "${INPUT_BASE_URL:-}"
+    while IFS= read -r v; do
+      [[ -n "$v" ]] && args+=(--header "$v")
+    done <<< "${INPUT_HEADER:-}"
+    for v in ${INPUT_LOAD:-};   do args+=(--load   "$v"); done
+    for v in ${INPUT_IGNORE:-}; do args+=(--ignore "$v"); done
+    [[ -n "${INPUT_MAX_STEPS:-}" ]] && args+=(--max-steps "$INPUT_MAX_STEPS")
+    [[ -n "${INPUT_OUTPUT_FORMAT:-}" ]] && args+=(--output-format "$INPUT_OUTPUT_FORMAT")
+    [[ "${INPUT_QUIET:-false}" == "true" ]] && args+=(--quiet)
+    ;;
+
+  # Reads the description and says what it offers; --format is all it takes.
+  "arazzo list")
     ;;
 
   # AsyncAPI takes --check rather than --ignore: `external-reference`

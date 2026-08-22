@@ -5,10 +5,10 @@ branding:
   color: 'purple'
 inputs:
   subcommand:
-    description: 'roas subcommand: validate, convert, overlay validate, overlay convert, overlay apply, arazzo validate, arazzo convert, asyncapi validate, or asyncapi convert'
+    description: 'roas subcommand: validate, convert, overlay validate, overlay convert, overlay apply, arazzo validate, arazzo convert, arazzo run, arazzo list, asyncapi validate, or asyncapi convert'
     default: 'validate'
   file:
-    description: 'Positional input: the OpenAPI spec (validate, convert, overlay apply), the Overlay document (overlay validate, overlay convert), the Arazzo description (arazzo validate, arazzo convert), or the AsyncAPI document (asyncapi validate, asyncapi convert), as JSON or YAML'
+    description: 'Positional input: the OpenAPI spec (validate, convert, overlay apply), the Overlay document (overlay validate, overlay convert), the Arazzo description (arazzo validate, arazzo convert, arazzo run, arazzo list), or the AsyncAPI document (asyncapi validate, asyncapi convert), as JSON or YAML'
     required: true
   from:
     description: 'Force input spec version (e.g. v2, v3.0, v3.1, v3.2). Spec validate/convert only.'
@@ -28,21 +28,35 @@ inputs:
     description: 'Lift inline components into the root bag and replace call sites with $refs (convert only).'
     default: 'false'
   load:
-    description: 'Whitespace-separated $ref loaders to enable: file, http'
+    description: 'Whitespace-separated loaders to enable: file, http. On validate/convert these load $refs; on arazzo run they fetch the source descriptions the run needs.'
   ignore:
-    description: 'Whitespace-separated checks to skip. validate: validation checks. overlay validate / arazzo validate: empty-info-title, empty-info-version. Not used by asyncapi validate, which takes check instead.'
+    description: 'Whitespace-separated checks to skip. validate: validation checks. overlay validate / arazzo validate / arazzo run: empty-info-title, empty-info-version. Not used by asyncapi validate, which takes check instead.'
   check:
     description: 'Whitespace-separated validation checks to adjust (asyncapi validate only): empty-info-title, empty-info-version and unused-channel-parameter relax a check; external-reference adds one, requiring a self-contained document.'
   strict:
     description: 'Fail when the conversion had to invent a name or leave something behind, instead of reporting it and exiting 0 (asyncapi convert only).'
     default: 'false'
   quiet:
-    description: 'Do not print the conversion report on stderr (asyncapi convert only).'
+    description: 'Do not print the report on stderr (asyncapi convert and arazzo run only).'
     default: 'false'
+  workflow:
+    description: 'The workflow to run (arazzo run only). Required when the description offers more than one; arazzo list says what it offers.'
+  input:
+    description: 'Newline-separated workflow inputs as NAME=VALUE (arazzo run only). Each value is read as JSON where it is JSON and as a string otherwise, so n=7 is a number and n=seven a string.'
+  inputs:
+    description: 'Path to a file of workflow inputs, a JSON or YAML object (arazzo run only). Anything input names as well wins over it.'
+  source:
+    description: 'Newline-separated source descriptions as NAME=PATH (arazzo run only). Without this, load fetches what the description points at.'
+  base-url:
+    description: 'Newline-separated NAME=URL pairs (arazzo run only), sending the requests for that source description somewhere else, whatever its own document says.'
+  header:
+    description: 'Newline-separated headers as "Name: value", added to every request a step does not set itself (arazzo run only).'
+  max-steps:
+    description: 'Stop the run after this many steps, in case a goto loops (arazzo run only).'
   format:
     description: 'Force input format: json or yaml'
   output-format:
-    description: 'Force output format for convert, overlay convert, overlay apply, arazzo convert, and asyncapi convert: json or yaml'
+    description: 'Force output format for convert, overlay convert, overlay apply, arazzo convert, arazzo run, and asyncapi convert: json or yaml'
   output-file:
     description: 'Write command output to this path instead of stdout'
   print:
@@ -56,3 +70,5 @@ runs:
     INPUT_OUTPUT_FORMAT: ${{ inputs.output-format }}
     INPUT_MERGE_OPTIONS: ${{ inputs.merge-options }}
     INPUT_APPLY_OPTIONS: ${{ inputs.apply-options }}
+    INPUT_BASE_URL: ${{ inputs.base-url }}
+    INPUT_MAX_STEPS: ${{ inputs.max-steps }}
