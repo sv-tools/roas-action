@@ -1,0 +1,32 @@
+name: Release
+
+on:
+  push:
+    # Version tags only: a floating major tag (v1) should move without
+    # drafting a release of its own.
+    tags: ['v*.*.*']
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Existing tag to draft a release for'
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  draft:
+    runs-on: ubuntu-latest
+    steps:
+      - name: draft a release for the tag
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          TAG: ${{ inputs.tag || github.ref_name }}
+        run: |
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "::notice::a release for $TAG already exists; leaving it alone"
+            exit 0
+          fi
+          gh release create "$TAG" --draft --verify-tag --generate-notes
+          echo "::notice::drafted a release for $TAG — review and publish it"
