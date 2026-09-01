@@ -13,6 +13,24 @@ The action is Docker-based and wraps the official
 [`ghcr.io/sv-tools/roas`](https://github.com/sv-tools/roas/pkgs/container/roas)
 image.
 
+## Stability
+
+From 1.0 the action's surface follows semver: the input names, the values
+`subcommand` accepts, and the meaning of the exit codes do not change
+incompatibly without a major bump. A new input, a new `subcommand` value, or a
+new value an existing input accepts is a minor release. The action exits `2`
+when its own inputs are wrong — an unknown `subcommand`, a missing `file`, a
+`convert` without `to` — and otherwise passes `roas`'s exit code through
+unchanged.
+
+Not covered: the version of `roas` the image wraps, which is bumped by
+automation in any release, patch ones included, so the wording of the
+diagnostics and reports it prints can change under a pin to `@v1`.
+
+Publishing a release moves the floating `v1` and `v1.0` tags to it, so
+`sv-tools/roas-action@v1` tracks the latest 1.x. Pin a full
+`sv-tools/roas-action@v1.0.0` where an exact `roas` build matters.
+
 ## Usage
 
 ### Validate
@@ -365,8 +383,9 @@ wrapped by this action, having nowhere useful to open on a runner.
 
 The action's `Dockerfile` is a multi-stage build:
 
-1. `FROM ghcr.io/sv-tools/roas:latest AS roas` pulls the upstream distroless
-   image only as a source for the `roas` binary.
+1. `FROM ghcr.io/sv-tools/roas:<version> AS src` pulls the upstream distroless
+   image only as a source for the `roas` binary. The tag is pinned to an exact
+   `roas` release and bumped by automation when a new one is published.
 2. The final stage is `debian:trixie-slim` (Debian 13, GLIBC 2.41 — required
    because the upstream `roas` binary is linked against GLIBC ≥ 2.39) with
    `ca-certificates` installed so TLS can be validated when following remote
